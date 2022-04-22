@@ -4,17 +4,17 @@ from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_outputs import (
     BaseModelOutput,
     MaskedLMOutput,
+    MultipleChoiceModelOutput,
+    QuestionAnsweringModelOutput,
     SequenceClassifierOutput,
+    TokenClassifierOutput,
 )
-
 from transformers.modeling_utils import PreTrainedModel, SequenceSummary
-
 from transformers.utils import logging
 
 from gau_alpha.layer import GAULayer, Norm
 
 logger = logging.get_logger(__name__)
-
 
 
 class GAUAlphaConfig(PretrainedConfig):
@@ -25,7 +25,7 @@ class GAUAlphaConfig(PretrainedConfig):
         vocab_size=12000,
         hidden_size=768,
         intermediate_size=1536,
-        num_hidden_layers=24,  
+        num_hidden_layers=24,
         max_position_embeddings=512,
         type_vocab_size=2,
         initializer_range=0.02,
@@ -63,7 +63,7 @@ class GAUAlphaConfig(PretrainedConfig):
         self.attention_scale = attention_scale
         self.intermediate_size = intermediate_size
         self.embedding_size = hidden_size if embedding_size is None else embedding_size
-        
+
 
 class GAUAlphaPreTrainedModel(PreTrainedModel):
     config_class = GAUAlphaConfig
@@ -72,19 +72,16 @@ class GAUAlphaPreTrainedModel(PreTrainedModel):
     def _init_weights(self, module):
         """Initialize the weights"""
         if isinstance(module, nn.Linear):
-            module.weight.data.normal_(
-                mean=0.0, std=self.config.initializer_range)
+            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
             if module.bias is not None:
                 module.bias.data.zero_()
         elif isinstance(module, nn.Embedding):
-            module.weight.data.normal_(
-                mean=0.0, std=self.config.initializer_range)
+            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
             if module.padding_idx is not None:
                 module.weight.data[module.padding_idx].zero_()
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
-
 
 
 class GAUAlphaEmbeddings(nn.Module):
@@ -105,7 +102,7 @@ class GAUAlphaEmbeddings(nn.Module):
     def forward(self, input_ids=None, token_type_ids=None):
         if token_type_ids is None:
             token_type_ids = torch.zeros_like(input_ids)
-        
+
         inputs_embeds = self.word_embeddings(input_ids)
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
         embeddings = inputs_embeds + token_type_embeddings
@@ -113,7 +110,6 @@ class GAUAlphaEmbeddings(nn.Module):
         embeddings = self.norm(embeddings)
         embeddings = self.dropout(embeddings)
         return embeddings
-
 
 
 class GAUAlphaEncoder(nn.Module):
@@ -137,20 +133,18 @@ class GAUAlphaEncoder(nn.Module):
                 for _ in range(config.num_hidden_layers)
             ]
         )
-        sinusoidal_id = self.get_sinusoidal_id(config.max_position_embeddings, config.attention_key_size)
+        sinusoidal_id = self.get_sinusoidal_id(
+            config.max_position_embeddings, config.attention_key_size
+        )
         self.register_buffer("sin_pos", sinusoidal_id.sin(), persistent=False)
         self.register_buffer("cos_pos", sinusoidal_id.cos(), persistent=False)
 
     def get_sinusoidal_id(self, max_length, output_dim):
-        position_ids = torch.arange(
-            0, max_length, dtype=torch.float32
-        )
-        indices = torch.arange(
-            0, output_dim // 2, dtype=torch.float32
-        )
+        position_ids = torch.arange(0, max_length, dtype=torch.float32)
+        indices = torch.arange(0, output_dim // 2, dtype=torch.float32)
         indices = torch.pow(10000.0, -2 * indices / output_dim)
         sinusoidal_id = torch.einsum("n,d->nd", position_ids, indices)
-        return sinusoidal_id[None,:,:]
+        return sinusoidal_id[None, :, :]
 
     def forward(
         self,
@@ -164,7 +158,7 @@ class GAUAlphaEncoder(nn.Module):
         all_self_attentions = () if output_attentions else None
 
         seqlen = hidden_states.shape[1]
-        sinusoidal_pos = self.sin_pos[:,:seqlen,:], self.cos_pos[:,:seqlen,:]
+        sinusoidal_pos = self.sin_pos[:, :seqlen, :], self.cos_pos[:, :seqlen, :]
 
         for i, layer_module in enumerate(self.layer):
             if output_hidden_states:
@@ -182,7 +176,7 @@ class GAUAlphaEncoder(nn.Module):
                     create_custom_forward(layer_module),
                     hidden_states,
                     attention_mask,
-                    sinusoidal_pos
+                    sinusoidal_pos,
                 )
             else:
                 layer_outputs = layer_module(
@@ -287,6 +281,7 @@ class GAUAlphaModel(GAUAlphaPreTrainedModel):
             attentions=encoder_outputs.attentions,
         )
 
+
 class RoFormerV2LMPredictionHead(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -294,6 +289,7 @@ class RoFormerV2LMPredictionHead(nn.Module):
 
     def forward(self, hidden_states):
         return self.decoder(hidden_states)
+
 
 class GAUAlphaOnlyMLMHead(nn.Module):
     def __init__(self, config):
@@ -352,7 +348,8 @@ class GAUAlphaForMaskedLM(GAUAlphaPreTrainedModel):
         if labels is not None:
             loss_fct = nn.CrossEntropyLoss()  # -100 index = padding token
             masked_lm_loss = loss_fct(
-                prediction_scores.reshape(-1, self.config.vocab_size), labels.reshape(-1)
+                prediction_scores.reshape(-1, self.config.vocab_size),
+                labels.reshape(-1),
             )
 
         if not return_dict:
@@ -373,16 +370,8 @@ class GAUAlphaForSequenceClassification(GAUAlphaPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
-        self.config = config
-
         self.gau_alpha = GAUAlphaModel(config)
-        classifier_dropout = (
-            config.classifier_dropout
-            if config.classifier_dropout is not None
-            else config.dropout
-        )
         self.sequence_summary = SequenceSummary(config)
-        self.dropout = nn.Dropout(classifier_dropout)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
         # Initialize weights and apply final processing
@@ -434,18 +423,220 @@ class GAUAlphaForSequenceClassification(GAUAlphaPreTrainedModel):
                     loss = loss_fct(logits, labels)
             elif self.config.problem_type == "single_label_classification":
                 loss_fct = nn.CrossEntropyLoss()
-                loss = loss_fct(
-                    logits.reshape(-1, self.num_labels), labels.reshape(-1))
+                loss = loss_fct(logits.reshape(-1, self.num_labels), labels.reshape(-1))
             elif self.config.problem_type == "multi_label_classification":
                 loss_fct = nn.BCEWithLogitsLoss()
                 loss = loss_fct(logits, labels)
         if not return_dict:
-            output = (logits,) + outputs[2:]
+            output = (logits,) + outputs[1:]
             return ((loss,) + output) if loss is not None else output
 
         return SequenceClassifierOutput(
             loss=loss,
             logits=logits,
+            hidden_states=outputs.hidden_states,
+            attentions=outputs.attentions,
+        )
+
+
+class GAUAlphaForMultipleChoice(GAUAlphaPreTrainedModel):
+    def __init__(self, config):
+        super().__init__(config)
+
+        self.gau_alpha = GAUAlphaModel(config)
+        self.sequence_summary = SequenceSummary(config)
+        self.classifier = nn.Linear(config.hidden_size, 1)
+
+        # Initialize weights and apply final processing
+        self.post_init()
+
+    def forward(
+        self,
+        input_ids=None,
+        attention_mask=None,
+        token_type_ids=None,
+        labels=None,
+        output_attentions=None,
+        output_hidden_states=None,
+        return_dict=None,
+    ):
+
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
+        num_choices = input_ids.shape[1]
+        input_ids = (
+            input_ids.reshape(-1, input_ids.size(-1)) if input_ids is not None else None
+        )
+        attention_mask = (
+            attention_mask.reshape(-1, attention_mask.size(-1))
+            if attention_mask is not None
+            else None
+        )
+        token_type_ids = (
+            token_type_ids.reshape(-1, token_type_ids.size(-1))
+            if token_type_ids is not None
+            else None
+        )
+
+        outputs = self.gau_alpha(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+
+        pooled_output = self.sequence_summary(outputs[0])
+        logits = self.classifier(pooled_output)
+        reshaped_logits = logits.reshape(-1, num_choices)
+
+        loss = None
+        if labels is not None:
+            loss_fct = nn.CrossEntropyLoss()
+            loss = loss_fct(reshaped_logits, labels)
+
+        if not return_dict:
+            output = (reshaped_logits,) + outputs[1:]
+            return ((loss,) + output) if loss is not None else output
+
+        return MultipleChoiceModelOutput(
+            loss=loss,
+            logits=reshaped_logits,
+            hidden_states=outputs.hidden_states,
+            attentions=outputs.attentions,
+        )
+
+
+class GAUAlphaForTokenClassification(GAUAlphaPreTrainedModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.num_labels = config.num_labels
+        self.gau_alpha = GAUAlphaModel(config)
+        classifier_dropout = (
+            config.classifier_dropout
+            if config.classifier_dropout is not None
+            else config.dropout
+        )
+        self.dropout = nn.Dropout(classifier_dropout)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
+
+        # Initialize weights and apply final processing
+        self.post_init()
+
+    def forward(
+        self,
+        input_ids=None,
+        attention_mask=None,
+        token_type_ids=None,
+        labels=None,
+        output_attentions=None,
+        output_hidden_states=None,
+        return_dict=None,
+    ):
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
+
+        outputs = self.gau_alpha(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+
+        sequence_output = outputs[0]
+        sequence_output = self.dropout(sequence_output)
+        logits = self.classifier(sequence_output)
+
+        loss = None
+        if labels is not None:
+            loss_fct = nn.CrossEntropyLoss()
+            loss = loss_fct(logits.reshape(-1, self.num_labels), labels.reshape(-1))
+
+        if not return_dict:
+            output = (logits,) + outputs[1:]
+            return ((loss,) + output) if loss is not None else output
+
+        return TokenClassifierOutput(
+            loss=loss,
+            logits=logits,
+            hidden_states=outputs.hidden_states,
+            attentions=outputs.attentions,
+        )
+
+
+class GAUAlphaForQuestionAnswering(GAUAlphaPreTrainedModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.num_labels = config.num_labels
+
+        self.gau_alpha = GAUAlphaModel(config)
+        self.qa_outputs = nn.Linear(config.hidden_size, config.num_labels)
+
+        # Initialize weights and apply final processing
+        self.post_init()
+
+    def forward(
+        self,
+        input_ids=None,
+        attention_mask=None,
+        token_type_ids=None,
+        start_positions=None,
+        end_positions=None,
+        output_attentions=None,
+        output_hidden_states=None,
+        return_dict=None,
+    ):
+
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
+
+        outputs = self.gau_alpha(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+
+        sequence_output = outputs[0]
+
+        logits = self.qa_outputs(sequence_output)
+        start_logits, end_logits = logits.split(1, dim=-1)
+        start_logits = start_logits.squeeze(-1).contiguous()
+        end_logits = end_logits.squeeze(-1).contiguous()
+
+        total_loss = None
+        if start_positions is not None and end_positions is not None:
+            # If we are on multi-GPU, split add a dimension
+            if start_positions.ndim > 1:
+                start_positions = start_positions.squeeze(-1)
+            if start_positions.ndim > 1:
+                end_positions = end_positions.squeeze(-1)
+            # sometimes the start/end positions are outside our model inputs, we ignore these terms
+            ignored_index = start_logits.size(1)
+            start_positions = start_positions.clamp(0, ignored_index)
+            end_positions = end_positions.clamp(0, ignored_index)
+
+            loss_fct = nn.CrossEntropyLoss(ignore_index=ignored_index)
+            start_loss = loss_fct(start_logits, start_positions)
+            end_loss = loss_fct(end_logits, end_positions)
+            total_loss = (start_loss + end_loss) / 2
+
+        if not return_dict:
+            output = (start_logits, end_logits) + outputs[1:]
+            return ((total_loss,) + output) if total_loss is not None else output
+
+        return QuestionAnsweringModelOutput(
+            loss=total_loss,
+            start_logits=start_logits,
+            end_logits=end_logits,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )

@@ -1,6 +1,17 @@
 # GAU-alpha-pytorch
 pytorch版本https://github.com/ZhuiyiTechnology/GAU-alpha
 
+## News
+- 2022/04/22 初始化仓库，添加初步的代码 
+
+
+## Install
+```bash
+pip install git+https://github.com/JunnYu/GAU-alpha-pytorch.git
+or
+pip install gau_alpha
+```
+
 ## MLM 测试
 ```python
 import torch
