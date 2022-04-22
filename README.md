@@ -94,7 +94,7 @@ for i, id in enumerate(tokenizer.encode(text)):
             tokenizer.convert_ids_to_tokens([id], skip_special_tokens=True)
         )
 print(pd_outputs_sentence)
-# pytorch: 今天[天+0.8657||气+0.0535||阳+0.0165||，+0.0126||晴+0.0111]很好，我[要+0.4619||想+0.4352||又+0.0252||就+0.0157||跑+0.0064]去公园玩。
+# paddle: 今天[天+0.8657||气+0.0535||阳+0.0165||，+0.0126||晴+0.0111]很好，我[要+0.4619||想+0.4352||又+0.0252||就+0.0157||跑+0.0064]去公园玩。
 ```
 
 ## 介绍
