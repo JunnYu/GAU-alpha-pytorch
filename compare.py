@@ -84,6 +84,7 @@ class GAU_alpha(RoFormerV2):
             ]
         return mapping
 
+
 # huggingface.co上的
 converted_ckpt_path = "junnyu/chinese_GAU-alpha-char_L-24_H-768"
 # 从苏神提供的链接下载的

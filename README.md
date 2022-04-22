@@ -2,7 +2,7 @@
 pytorch版本https://github.com/ZhuiyiTechnology/GAU-alpha
 
 ## News
-- 2022/04/22 初始化仓库，添加初步的代码 
+- 2022/04/22 初始化仓库，添加初步的代码, 添加`paddle`版本`gau_alpha`代码。
 
 
 ## Install
@@ -20,15 +20,23 @@ python compare.py
 # max diff : tensor(3.9101e-05)
 ```
 
-## MLM 测试
+## torch版本使用
+### 依赖：
+- torch
+- transformers
+
 ```python
 import torch
 from gau_alpha import GAUAlphaForMaskedLM, GAUAlphaTokenizer
 
 text = "今天[MASK]很好，我[MASK]去公园玩。"
-tokenizer = GAUAlphaTokenizer.from_pretrained("junnyu/chinese_GAU-alpha-char_L-24_H-768")
-pt_model = GAUAlphaForMaskedLM.from_pretrained("junnyu/chinese_GAU-alpha-char_L-24_H-768")
-
+tokenizer = GAUAlphaTokenizer.from_pretrained(
+    "junnyu/chinese_GAU-alpha-char_L-24_H-768"
+)
+pt_model = GAUAlphaForMaskedLM.from_pretrained(
+    "junnyu/chinese_GAU-alpha-char_L-24_H-768"
+)
+pt_model.eval()
 pt_inputs = tokenizer(text, return_tensors="pt")
 
 with torch.no_grad():
@@ -36,19 +44,58 @@ with torch.no_grad():
 pt_outputs_sentence = "pytorch: "
 for i, id in enumerate(tokenizer.encode(text)):
     if id == tokenizer.mask_token_id:
-        val,idx = pt_outputs[i].softmax(-1).topk(k=5)
+        val, idx = pt_outputs[i].softmax(-1).topk(k=5)
         tokens = tokenizer.convert_ids_to_tokens(idx)
         new_tokens = []
-        for v,t in zip(val.cpu(),tokens):
+        for v, t in zip(val.cpu(), tokens):
             new_tokens.append(f"{t}+{round(v.item(),4)}")
         pt_outputs_sentence += "[" + "||".join(new_tokens) + "]"
     else:
         pt_outputs_sentence += "".join(
-            tokenizer.convert_ids_to_tokens([id], skip_special_tokens=True))
+            tokenizer.convert_ids_to_tokens([id], skip_special_tokens=True)
+        )
 print(pt_outputs_sentence)
 # pytorch: 今天[天+0.8657||气+0.0535||阳+0.0165||，+0.0126||晴+0.0111]很好，我[要+0.4619||想+0.4352||又+0.0252||就+0.0157||跑+0.0064]去公园玩。
 ```
 
+## Paddle版本使用
+### 依赖：
+- paddlepaddle>=2.2.0
+- paddlenlp
+
+```python
+import paddle
+from transformers import BertTokenizer as GAUAlphaTokenizer
+from gau_alpha_paddle import GAUAlphaForMaskedLM
+
+text = "今天[MASK]很好，我[MASK]去公园玩。"
+tokenizer = GAUAlphaTokenizer.from_pretrained(
+    "junnyu/chinese_GAU-alpha-char_L-24_H-768"
+)
+pd_model = GAUAlphaForMaskedLM.from_pretrained("chinese_GAU-alpha-char_L-24_H-768")
+pd_model.eval()
+pd_inputs = tokenizer(text)
+pd_inputs = {k: paddle.to_tensor([v]) for k, v in pd_inputs.items()}
+
+with paddle.no_grad():
+    pd_outputs = pd_model(**pd_inputs)[0][0]
+
+pd_outputs_sentence = "paddle: "
+for i, id in enumerate(tokenizer.encode(text)):
+    if id == tokenizer.mask_token_id:
+        val, idx = paddle.nn.functional.softmax(pd_outputs[i], -1).topk(k=5)
+        tokens = tokenizer.convert_ids_to_tokens(idx)
+        new_tokens = []
+        for v, t in zip(val.cpu(), tokens):
+            new_tokens.append(f"{t}+{round(v.item(),4)}")
+        pd_outputs_sentence += "[" + "||".join(new_tokens) + "]"
+    else:
+        pd_outputs_sentence += "".join(
+            tokenizer.convert_ids_to_tokens([id], skip_special_tokens=True)
+        )
+print(pd_outputs_sentence)
+# pytorch: 今天[天+0.8657||气+0.0535||阳+0.0165||，+0.0126||晴+0.0111]很好，我[要+0.4619||想+0.4352||又+0.0252||就+0.0157||跑+0.0064]去公园玩。
+```
 
 ## 介绍
 
