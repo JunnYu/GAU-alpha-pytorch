@@ -7,7 +7,7 @@ from transformers.activations import get_activation
 INF = 1e12
 
 
-def attention_normalize(a, dim=-1, method="softmax"):
+def attention_normalize(a, l, dim=-1, method="softmax"):
     """不同的注意力归一化方案
     softmax：常规/标准的指数归一化；
     squared_relu：来自 https://arxiv.org/abs/2202.10447 ；
@@ -16,8 +16,6 @@ def attention_normalize(a, dim=-1, method="softmax"):
     if method == "softmax":
         return torch.softmax(a, dim=dim)
     else:
-        mask = a > -INF / 10
-        l = torch.max(torch.sum(mask, dim=dim, keepdim=True), dim=1)[0]
         if method == "squared_relu":
             return torch.relu(a) ** 2 / l
         elif method == "softmax_plus":
@@ -140,8 +138,11 @@ class GatedAttentionUnit(nn.Module):
             if attention_mask.ndim == 2:
                 attention_mask = attention_mask[:, None, :]
             a = a.masked_fill(attention_mask == 0, -INF)
+            l = attention_mask.sum(-1, keepdim=True)
+        else:
+            l = x.shape[1]
 
-        A = attention_normalize(a, dim=-1, method=self.normalization)
+        A = attention_normalize(a, l, dim=-1, method=self.normalization)
 
         A = F.dropout(A, p=self.attention_dropout, training=self.training)
 

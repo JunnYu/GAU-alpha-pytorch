@@ -12,6 +12,14 @@ or
 pip install gau_alpha
 ```
 
+## 精度对齐
+```bash
+python compare.py
+# bert4keras vs pytorch
+# mean diff : tensor(6.9320e-07)
+# max diff : tensor(3.9101e-05)
+```
+
 ## MLM 测试
 ```python
 import torch
