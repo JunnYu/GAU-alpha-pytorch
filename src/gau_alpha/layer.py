@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers.activations import get_activation
 
-INF = 1e12
+INF = 1e4
 
 
 def attention_normalize(a, l, dim=-1, method="softmax"):
@@ -135,12 +135,10 @@ class GatedAttentionUnit(nn.Module):
             a = a / self.attention_key_size ** 0.5
 
         if attention_mask is not None:
-            if attention_mask.ndim == 2:
-                attention_mask = attention_mask[:, None, :]
             a = a.masked_fill(attention_mask == 0, -INF)
             l = attention_mask.sum(-1, keepdim=True)
         else:
-            l = x.shape[1]
+            l = torch.ones_like(a) * x.shape[1]
 
         A = attention_normalize(a, l, dim=-1, method=self.normalization)
 

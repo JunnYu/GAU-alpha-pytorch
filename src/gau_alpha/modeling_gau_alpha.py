@@ -253,7 +253,9 @@ class GAUAlphaModel(GAUAlphaPreTrainedModel):
         if attention_mask is None:
             attention_mask = (input_ids != self.config.pad_token_id).type_as(
                 self.embeddings.word_embeddings.weight
-            )
+            )  # bs, seqlen
+        if attention_mask.ndim == 2:
+            attention_mask = attention_mask.unsqueeze(1)  # bs, 1, seqlen
 
         if token_type_ids is None:
             token_type_ids = torch.zeros_like(input_ids)

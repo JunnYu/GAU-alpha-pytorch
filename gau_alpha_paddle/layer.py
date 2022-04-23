@@ -4,7 +4,7 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 from paddlenlp.transformers.albert.modeling import ACT2FN
 
-INF = 1e12
+INF = 1e4
 
 
 def attention_normalize(a, l, axis=-1, method="softmax"):
@@ -141,16 +141,12 @@ class GatedAttentionUnit(nn.Layer):
             a = a / self.attention_key_size ** 0.5
 
         if attention_mask is not None:
-            if attention_mask.ndim == 2:
-                attention_mask = attention_mask[:, None, :]
             a = a * attention_mask + (attention_mask - 1) * INF
             l = attention_mask.sum(-1, keepdim=True)
         else:
-            l = x.shape[1]
+            l = paddle.ones_like(a) * x.shape[1]
 
-        A = attention_normalize(
-            a, paddle.to_tensor(l, dtype=a.dtype), axis=-1, method=self.normalization
-        )
+        A = attention_normalize(a, l, axis=-1, method=self.normalization)
 
         A = F.dropout(A, p=self.attention_dropout, training=self.training)
 
