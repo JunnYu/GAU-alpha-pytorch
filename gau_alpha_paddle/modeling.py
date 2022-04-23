@@ -122,11 +122,10 @@ class GAUAlphaModel(GAUAlphaPretrainedModel):
     ):
 
         if attention_mask is None:
-            attention_mask = (input_ids != self.pad_token_id).astype(
-                paddle.get_default_dtype()
-            )
+            attention_mask = input_ids != self.pad_token_id
         if attention_mask.ndim == 2:
-            attention_mask = attention_mask.unsqueeze(1) # bs, 1, seqlen
+            attention_mask = attention_mask.unsqueeze(1)  # bs, 1, seqlen
+        attention_mask = attention_mask.astype(paddle.get_default_dtype())
 
         if token_type_ids is None:
             token_type_ids = paddle.zeros_like(input_ids)
