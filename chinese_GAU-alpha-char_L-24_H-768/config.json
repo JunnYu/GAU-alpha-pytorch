@@ -23,5 +23,6 @@
   "transformers_version": "4.17.0",
   "type_vocab_size": 2,
   "use_bias": false,
-  "vocab_size": 12000
+  "vocab_size": 12000,
+  "summary_type": "first"
 }

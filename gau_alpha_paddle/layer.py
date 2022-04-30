@@ -7,7 +7,7 @@ from paddlenlp.transformers.albert.modeling import ACT2FN
 INF = 1e4
 
 
-def attention_normalize(a, l, axis=-1, method="softmax"):
+def attention_normalize(a, mask=None, axis=-1, method="softmax"):
     """不同的注意力归一化方案
     softmax：常规/标准的指数归一化；
     squared_relu：来自 https://arxiv.org/abs/2202.10447 ；
@@ -16,10 +16,19 @@ def attention_normalize(a, l, axis=-1, method="softmax"):
     if method == "softmax":
         return F.softmax(a, axis=axis)
     else:
+        if mask is not None:
+            l = mask.sum(-1, keepdim=True)
+        else:
+            l = paddle.ones_like(a) * a.shape[-2]
         if method == "squared_relu":
             return F.relu(a) ** 2 / l
         elif method == "softmax_plus":
-            return F.softmax(a * paddle.log(l) / np.log(512), axis=axis)
+            scale = paddle.log(l) / np.log(512)
+            # mask: 1 for not padding, 0 for padding
+            # padding position's scale is 1
+            if mask is not None:
+                scale = scale * mask + 1 - mask
+            return F.softmax(a * scale, axis=axis)
     return a
 
 
@@ -149,11 +158,8 @@ class GatedAttentionUnit(nn.Layer):
 
         if attention_mask is not None:
             a = a * attention_mask + (attention_mask - 1) * INF
-            l = attention_mask.sum(-1, keepdim=True)
-        else:
-            l = paddle.ones_like(a) * x.shape[1]
 
-        A = attention_normalize(a, l, axis=-1, method=self.normalization)
+        A = attention_normalize(a, attention_mask, axis=-1, method=self.normalization)
 
         A = F.dropout(A, p=self.attention_dropout, training=self.training)
 
