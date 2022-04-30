@@ -1,0 +1,70 @@
+Distributed environment: NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cuda
+Mixed precision type: no
+
+Sample 228 of the training set: {'input_ids': [101, 7045, 6738, 260, 7082, 4407, 359, 306, 2388, 4407, 5402, 2450, 7675, 5285, 198, 3506, 4045, 4407, 3560, 3560, 4334, 100, 4739, 1717, 100, 179, 138, 326, 140, 1278, 731, 588, 2122, 1033, 199, 6429, 179, 102], 'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 'labels': 1}.
+Sample 51 of the training set: {'input_ids': [101, 1246, 3243, 100, 306, 3926, 100, 994, 2830, 3926, 4334, 590, 4896, 7675, 336, 868, 138, 326, 340, 140, 911, 5340, 4334, 590, 4896, 6657, 2798, 5462, 831, 5462, 4626, 179, 102], 'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 'labels': 0}.
+Sample 563 of the training set: {'input_ids': [101, 7606, 572, 3898, 940, 178, 1033, 1033, 3898, 6153, 178, 7606, 572, 4179, 3898, 4334, 3310, 3316, 4983, 100, 1033, 1033, 100, 693, 6553, 270, 192, 223, 4186, 138, 1505, 140, 4196, 2037, 6153, 4334, 5364, 897, 7675, 1057, 2169, 1033, 1033, 5340, 1925, 260, 2157, 4227, 7606, 572, 2798, 935, 4395, 940, 2108, 2330, 7675, 387, 1505, 192, 6026, 7606, 572, 7675, 6018, 6153, 4334, 6131, 1776, 6354, 3462, 3330, 3422, 3674, 383, 4334, 2500, 201, 391, 179, 102], 'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 'labels': 0}.
+***** Running training *****
+  Num examples = 1244
+  Num Epochs = 30
+  Instantaneous batch size per device = 32
+  Total train batch size (w. parallel, distributed & accumulation) = 32
+  Gradient Accumulation steps = 1
+  Total optimization steps = 1170
+epoch 0: {'accuracy': 0.6348684210526315}
+completed_steps 50 - loss: 0.72137409
+epoch 1: {'accuracy': 0.5723684210526315}
+completed_steps 100 - loss: 0.70987451
+epoch 2: {'accuracy': 0.6381578947368421}
+completed_steps 150 - loss: 0.44378567
+epoch 3: {'accuracy': 0.6842105263157895}
+epoch 4: {'accuracy': 0.7072368421052632}
+completed_steps 200 - loss: 0.14835896
+epoch 5: {'accuracy': 0.7532894736842105}
+completed_steps 250 - loss: 0.16228852
+epoch 6: {'accuracy': 0.75}
+completed_steps 300 - loss: 0.02643012
+epoch 7: {'accuracy': 0.756578947368421}
+completed_steps 350 - loss: 0.07095461
+epoch 8: {'accuracy': 0.7796052631578947}
+epoch 9: {'accuracy': 0.75}
+completed_steps 400 - loss: 0.05524460
+epoch 10: {'accuracy': 0.7697368421052632}
+completed_steps 450 - loss: 0.04325590
+epoch 11: {'accuracy': 0.7664473684210527}
+completed_steps 500 - loss: 0.01583157
+epoch 12: {'accuracy': 0.7664473684210527}
+epoch 13: {'accuracy': 0.7697368421052632}
+completed_steps 550 - loss: 0.01039236
+epoch 14: {'accuracy': 0.7697368421052632}
+completed_steps 600 - loss: 0.02005289
+epoch 15: {'accuracy': 0.7861842105263158}
+completed_steps 650 - loss: 0.00362767
+epoch 16: {'accuracy': 0.7664473684210527}
+completed_steps 700 - loss: 0.05570603
+epoch 17: {'accuracy': 0.7335526315789473}
+epoch 18: {'accuracy': 0.7401315789473685}
+completed_steps 750 - loss: 0.00672253
+epoch 19: {'accuracy': 0.7631578947368421}
+completed_steps 800 - loss: 0.00065486
+epoch 20: {'accuracy': 0.7861842105263158}
+completed_steps 850 - loss: 0.03071958
+epoch 21: {'accuracy': 0.7828947368421053}
+epoch 22: {'accuracy': 0.7598684210526315}
+completed_steps 900 - loss: 0.00192866
+epoch 23: {'accuracy': 0.7664473684210527}
+completed_steps 950 - loss: 0.00033531
+epoch 24: {'accuracy': 0.7960526315789473}
+completed_steps 1000 - loss: 0.00109744
+epoch 25: {'accuracy': 0.805921052631579}
+completed_steps 1050 - loss: 0.00014795
+epoch 26: {'accuracy': 0.7927631578947368}
+epoch 27: {'accuracy': 0.7993421052631579}
+completed_steps 1100 - loss: 0.00131983
+epoch 28: {'accuracy': 0.7828947368421053}
+completed_steps 1150 - loss: 0.00352364
+epoch 29: {'accuracy': 0.7828947368421053}
