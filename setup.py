@@ -13,3 +13,8 @@ setup(
     keywords=["gau_alpha", "pytorch"],
     install_requires=["transformers>=4.13.0"],
 )
+"""
+release
+python setup.py sdist bdist_wheel
+twine upload dist/*
+"""
