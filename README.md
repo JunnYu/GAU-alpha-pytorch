@@ -2,6 +2,7 @@
 pytorch版本https://github.com/ZhuiyiTechnology/GAU-alpha
 
 ## News
+- 2022/05/11 感谢苏神提醒，添加了一个注释，其中RoFormerV2<sup>*</sup>表示未经多任务学习的RoFormerV2模型。
 - 2022/04/22 初始化仓库，添加初步的代码, 添加`paddle`版本`gau_alpha`代码。
 - 2022/04/30 添加CLUE分类任务代码。
 
@@ -112,18 +113,19 @@ print(pd_outputs_sentence)
 | RoBERTa | 60.64 | 58.06 | 74.05 | **81.24** | 76.00 | 87.50 | 84.50 |
 | RoFormer | 60.91 | 57.54 | 73.52 | 80.92 | 76.07 | 86.84 | 84.63 |
 | RoFormerV2<sup>*</sup> | 60.87 | 56.54 | 72.75 | 80.34 | 75.36 | 80.92 | 84.67 |
-| RoFormerV2<sup>*</sup>-pytorch| **62.87** | **59.03** | **76.20** | 80.85 | **79.73** |   **87.82**   | **91.87** |
 | GAU-α | 61.41 | 57.76 | 74.17 | 81.82 | 75.86 | 79.93 | 85.67 |
+| RoFormerV2-pytorch| **62.87** | **59.03** | **76.20** | 80.85 | **79.73** |   **87.82**   | **91.87** |
 | GAU-α-pytorch（Adafactor） | 61.18 | 57.52 | 73.42 | 80.91 | 75.69 | 80.59 | 85.5 |
-| GAU-α-pytorch（AdamW wd0.01 warm_decay0.1） | 60.68 | 57.95 | 73.08 | 81.02 | 75.36 | 81.25 | 83.93 |
+| GAU-α-pytorch（AdamW wd0.01 warmup0.1） | 60.68 | 57.95 | 73.08 | 81.02 | 75.36 | 81.25 | 83.93 |
 
 ### CLUE-test榜单分类任务结果，base版本。
 
 |         | iflytek | tnews | afqmc | cmnli | ocnli | wsc | csl |
 | :-----: | :-----: | :---: | :---: | :---: | :---: | :---: | :---: |
-| RoFormerV2<sup>*</sup>-pytorch(本仓库代码) | 63.15 | 58.24 | 75.42 | 80.59 | 74.17 |   83.79   | 83.73 |
-| GAU-α-pytorch（Adafactor） | 61.38 | 57.08 | 74.05 | 80.37 | 73.53 | 74.83 | 85.6 |
-| GAU-α-pytorch（AdamW wd0.01 warm_decay0.1） | 60.54 | 57.67 | 72.44 | 80.32 | 72.97 | 76.55 | 84.13 |
+| RoFormerV2-pytorch | **63.15** | **58.24** | **75.42** | **80.59** | **74.17** |   **83.79**   | 83.73 |
+| GAU-α-pytorch（Adafactor） | 61.38 | 57.08 | 74.05 | 80.37 | 73.53 | 74.83 | **85.6** |
+| GAU-α-pytorch（AdamW wd0.01 warmup0.1） | 60.54 | 57.67 | 72.44 | 80.32 | 72.97 | 76.55 | 84.13 |
+
 
 ### CLUE-dev集榜单阅读理解和NER结果
 
@@ -135,6 +137,10 @@ print(pd_outputs_sentence)
 | RoFormerV2<sup>*</sup> | 57.91 | 64.62 | 85.09 | **81.08** |
 | GAU-α | **58.09** | **68.24** | **87.91** | 80.01 |
 
+### 注：
+- 其中RoFormerV2<sup>*</sup>表示的是未进行多任务学习的RoFormerV2模型，该模型苏神并未开源，感谢苏神的提醒。
+- 其中不带有pytorch后缀结果都是从[GAU-alpha](https://github.com/ZhuiyiTechnology/GAU-alpha)仓库复制过来的。
+- 其中带有pytorch后缀的结果都是自己训练得出的。
 ## 引用
 Bibtex：
 

@@ -157,7 +157,6 @@ class GAUAlphaEmbeddings(nn.Layer):
     ):
         super(GAUAlphaEmbeddings, self).__init__()
         self.word_embeddings = nn.Embedding(vocab_size, hidden_size)
-        self.position_embeddings = nn.Embedding(max_position_embeddings, hidden_size)
         self.token_type_embeddings = nn.Embedding(type_vocab_size, hidden_size)
         self.norm = Norm(eps=norm_eps)
         self.dropout = nn.Dropout(hidden_dropout_prob)
